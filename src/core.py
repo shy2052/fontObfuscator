@@ -5,9 +5,10 @@ from fontTools.fontBuilder import FontBuilder
 from fontTools.pens.ttGlyphPen import TTGlyphPen
 from fontTools.ttLib import TTFont
 
-from config import NAME_STRING
+from config import NAME_STRING, BASE_FONT_FILE
 from src.utils import str_has_whitespace, str_has_emoji, deduplicate_str, ensure_cmap_has_all_text, subset_ttf_font, \
     get_project_root
+from rename_fonts import add_family_suffix
 
 root = get_project_root()
 
@@ -36,7 +37,7 @@ def obfuscate(plain_text, shadow_text, filename: str, only_ttf: bool, target_pat
     if len(plain_text) != len(shadow_text):
         raise Exception('阴书的有效长度需与明文一致')
 
-    original_font = TTFont(root / 'base-font/KaiGenGothicCN-Regular.ttf')
+    original_font = TTFont(root / BASE_FONT_FILE)
     # https://github.com/fonttools/fonttools/blob/4.0.1/Lib/fontTools/fontBuilder.py#L28
 
     # <class 'dict'>: {32: 'cid00001', 33: 'cid00002', 34: 'cid00003'...}
@@ -144,7 +145,7 @@ def obfuscate_plus(plain_text, filename: str, only_ttf: bool, target_path: str =
 
     plain_text = deduplicate_str(plain_text)
 
-    original_font = TTFont(root / 'base-font/KaiGenGothicCN-Regular.ttf')
+    original_font = TTFont(root / BASE_FONT_FILE)
     # https://github.com/fonttools/fonttools/blob/4.0.1/Lib/fontTools/fontBuilder.py#L28
 
     # <class 'dict'>: {32: 'cid00001', 33: 'cid00002', 34: 'cid00003'...}
@@ -252,3 +253,57 @@ def obfuscate_plus(plain_text, filename: str, only_ttf: bool, target_path: str =
     else:
         woff_and_woff2 = subset_ttf_font(f'{root}/{target_path}/{filename}')
         return {**result, **woff_and_woff2}, dict(zip(plain_text, html_entities))
+
+
+def obfuscate_keep(plain_text, shadow_text, filename: str, suffix: str = '', target_path: str = 'output') -> dict:
+    """
+    :param plain_text: 用户看到的内容
+    :param shadow_text: 爬虫看到的内容
+    :param filename: 不含格式后缀的文件名
+    :param target_path: 生成的目标目录
+    """
+
+    if str_has_whitespace(plain_text) | str_has_whitespace(shadow_text):
+        raise Exception('明文或阴书不允许含有空格')
+
+    if str_has_emoji(plain_text) | str_has_emoji(shadow_text):
+        raise Exception('明文或阴书不允许含有emoji')
+
+    plain_text = deduplicate_str(plain_text)
+    shadow_text = deduplicate_str(shadow_text)
+
+    if plain_text == shadow_text:
+        raise Exception('没有意义的混淆')
+
+    if len(plain_text) != len(shadow_text):
+        raise Exception('阴书的有效长度需与明文一致')
+
+    original_font = TTFont(root / BASE_FONT_FILE)
+    # https://github.com/fonttools/fonttools/blob/4.0.1/Lib/fontTools/fontBuilder.py#L28
+
+    # <class 'dict'>: {32: 'cid00001', 33: 'cid00002', 34: 'cid00003'...}
+    # key 为 ord(字符串)
+    original_cmap: dict = original_font.getBestCmap()
+
+    try:
+        ensure_cmap_has_all_text(original_cmap, plain_text)
+    except Exception as e:
+        raise e
+
+    cmap = original_font['cmap']
+    for index, (plain, shadow) in enumerate(zip(plain_text, shadow_text)):
+        # print('index', index, 'plain', plain, 'shadow', shadow)
+        for table in cmap.tables:
+            if ord(plain) not in table.cmap:
+                continue
+            table.cmap[ord(shadow)]=original_cmap[ord(plain)]
+
+    if suffix != '':
+        add_family_suffix(original_font, f' {suffix}')
+
+    original_font.save(f'{root}/{target_path}/{filename}.ttf')
+
+    result = dict()
+    result['ttf'] = f'{root}/{target_path}/{filename}.ttf'
+
+    return result
