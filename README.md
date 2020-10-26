@@ -1,5 +1,9 @@
 # fontObfuscator
 
+## 自用修改
+
+默认不安装api和oss支持，增加只替换原字体中部分文字的功能
+
 ## 欢迎加入爬虫讨论群组 https://t.me/crawler_discussion
 
 ## 简介
