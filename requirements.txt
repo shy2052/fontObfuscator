@@ -1,2 +1,2 @@
-emoji==0.5.4
-fonttools==4.13.0
+emoji==2.2.0
+fonttools==4.38.0

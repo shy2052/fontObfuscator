@@ -12,7 +12,7 @@ def str_has_whitespace(s: str) -> bool:
 
 def str_has_emoji(s: str) -> bool:
     for character in s:
-        if character in emoji.UNICODE_EMOJI:
+        if emoji.is_emoji(character):
             return True
     return False
 
