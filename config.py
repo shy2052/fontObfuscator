@@ -12,7 +12,7 @@ BUCKET_API_KEY = ''
 BUCKET_API_SECRET = ''
 
 # 原始字体
-BASE_FONT_FILE = 'base-font/sarasa-ui-sc-regular.ttf'
+BASE_FONT_FILE = 'base-font/SarasaUiSC-Regular.ttf'
 
 # 字体名
 FAMILY_NAME = 'MyAwesomeFont'

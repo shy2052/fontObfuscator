@@ -126,11 +126,8 @@ dmypy.json
 
 # my
 .idea/
+.vscode/
 .DS_Store
 output/
-test/test.ttf
-test/test.woff
-test/test.woff2
-test/test_plus.ttf
-test/test_plus.woff
-test/test_plus.woff2
+test/
+/*.ttf
